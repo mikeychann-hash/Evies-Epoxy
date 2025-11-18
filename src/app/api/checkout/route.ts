@@ -22,16 +22,67 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
     }
 
-    // Calculate totals
-    const subtotal = items.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
+    // CRITICAL SECURITY FIX: Fetch prices from database instead of trusting client
+    // Prevents price manipulation attacks (e.g., changing $99.99 to $0.01)
+    const productIds = items.map((item: any) => item.productId);
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: productIds },
+        isActive: true, // Only allow active products
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+      },
+    });
+
+    // Validate all products exist and are active
+    if (products.length !== items.length) {
+      return NextResponse.json(
+        { error: "Some products are invalid or inactive" },
+        { status: 400 }
+      );
+    }
+
+    // Create product map for quick lookup
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    // Validate stock availability and use REAL prices from database
+    const validatedItems = items.map((item: any) => {
+      const product = productMap.get(item.productId);
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+
+      // Check stock availability
+      if (product.stock < item.quantity) {
+        throw new Error(
+          `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`
+        );
+      }
+
+      // Use REAL price from database, not client-supplied price
+      return {
+        productId: product.id,
+        productName: product.name,
+        quantity: item.quantity,
+        price: product.price, // ⚠️ CRITICAL: Use DB price, not item.price
+      };
+    });
+
+    // Calculate totals using VALIDATED prices
+    const subtotal = validatedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
       0
     );
     const shipping = subtotal > 50 ? 0 : 10;
     const tax = subtotal * 0.1;
     const total = subtotal + shipping + tax;
 
-    // Create order in database
+    // Create order in database with VALIDATED items
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
@@ -42,24 +93,24 @@ export async function POST(request: Request) {
           ? JSON.parse(JSON.stringify(billingAddress))
           : null,
         items: {
-          create: items.map((item: any) => ({
+          create: validatedItems.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.price,
+            price: item.price, // Using validated DB price
           })),
         },
       },
     });
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with VALIDATED items
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: session.user.email || undefined,
-      line_items: items.map((item: any) => ({
+      line_items: validatedItems.map((item) => ({
         price_data: {
           currency: "usd",
           product_data: {
-            name: `Product ${item.productId}`,
+            name: item.productName, // Use real product name, not "Product {id}"
           },
           unit_amount: Math.round(item.price * 100),
         },
