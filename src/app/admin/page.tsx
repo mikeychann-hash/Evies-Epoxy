@@ -19,6 +19,8 @@ export default function AdminDashboard() {
     totalRevenue: 0,
   });
 
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -26,6 +28,18 @@ export default function AdminDashboard() {
       router.push("/");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (session?.user?.role === "ADMIN") {
+      fetch("/api/admin/stats")
+        .then((res) => res.json())
+        .then((data) => {
+          setStats(data);
+        })
+        .catch(() => {})
+        .finally(() => setIsLoadingStats(false));
+    }
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -103,7 +117,13 @@ export default function AdminDashboard() {
                       <Icon className={`w-6 h-6 ${stat.color}`} />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold mb-1">{stat.value}</h3>
+                  <h3 className="text-2xl font-bold mb-1">
+                    {isLoadingStats ? (
+                      <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    ) : (
+                      stat.value
+                    )}
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {stat.title}
                   </p>

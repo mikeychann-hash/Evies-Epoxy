@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { useCartStore } from "@/store/cartStore";
+import { useCartStore, selectCartTotal } from "@/store/cartStore";
 import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { loadStripe } from "@stripe/stripe-js";
@@ -21,7 +21,8 @@ const stripePromise = loadStripe(
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
+  const subtotal = useCartStore(selectCartTotal);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sameAsShipping, setSameAsShipping] = useState(true);
 
@@ -49,7 +50,12 @@ export default function CheckoutPage() {
     country: "US",
   });
 
-  const subtotal = getTotal();
+  useEffect(() => {
+    if (session?.user?.email) {
+      setShippingAddress((prev) => ({ ...prev, email: session.user.email || "" }));
+    }
+  }, [session]);
+
   const shipping = subtotal > 50 ? 0 : 10;
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;

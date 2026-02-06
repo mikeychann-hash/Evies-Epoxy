@@ -1,15 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'images.unsplash.com', 'res.cloudinary.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+    ],
     formats: ['image/avif', 'image/webp'],
   },
   reactStrictMode: true,
-  swcMinify: true,
   output: 'standalone', // For Docker deployment
-  experimental: {
-    optimizeCss: true,
-  },
 };
 
 export default nextConfig;

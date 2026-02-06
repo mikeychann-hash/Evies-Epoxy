@@ -1,60 +1,47 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { ProductDetails } from "@/components/products/ProductDetails";
 import { RelatedProducts } from "@/components/products/RelatedProducts";
-
-// Mock data - will be replaced with actual API call
-const mockProduct = {
-  id: "1",
-  name: "Ocean Wave Coaster Set",
-  slug: "ocean-wave-coaster-set",
-  description:
-    "Beautiful handcrafted epoxy coasters featuring stunning ocean wave designs. Each set includes 4 coasters with unique wave patterns. Perfect for protecting your furniture while adding a touch of coastal elegance to your home.\n\nKey Features:\n- Set of 4 unique coasters\n- High-quality epoxy resin\n- Heat resistant up to 200°F\n- Non-slip cork backing\n- Easy to clean\n- Handmade with care",
-  price: 45.99,
-  compareAtPrice: 59.99,
-  images: [
-    "https://images.unsplash.com/photo-1617360547964-1078bb789e2d?w=800",
-    "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800",
-    "https://images.unsplash.com/photo-1595665593673-bf1ad72905c0?w=800",
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800",
-  ],
-  categoryId: "1",
-  category: {
-    id: "1",
-    name: "Art & Decor",
-    slug: "art",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  stock: 15,
-  isActive: true,
-  isFeatured: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+import { Product } from "@/types";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  // In real app, fetch product data here
+  const { slug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug, isActive: true },
+  });
+
+  if (!product) {
+    return {
+      title: "Product Not Found - Evie's Epoxy",
+    };
+  }
+
   return {
-    title: `${mockProduct.name} - Evie's Epoxy`,
-    description: mockProduct.description.slice(0, 160),
+    title: `${product.name} - Evie's Epoxy`,
+    description: product.description.slice(0, 160),
     openGraph: {
-      images: [mockProduct.images[0]],
+      images: product.images[0] ? [product.images[0]] : [],
     },
   };
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  // In real app, fetch product by slug
-  if (!mockProduct) {
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const { slug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug, isActive: true },
+    include: { category: true },
+  });
+
+  if (!product) {
     notFound();
   }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <div className="container-custom py-12">
-        <ProductDetails product={mockProduct as any} />
+        <ProductDetails product={product as Product} />
         <div className="mt-20">
-          <RelatedProducts currentProductId={mockProduct.id} />
+          <RelatedProducts currentProductId={product.id} />
         </div>
       </div>
     </div>

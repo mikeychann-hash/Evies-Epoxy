@@ -1,21 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Product } from "@/types";
+import { Product, CartItem } from "@/types";
 
-export interface CartItem {
-  id: string;
-  product: Product;
-  quantity: number;
-}
-
-interface CartStore {
+export interface CartStore {
   items: CartItem[];
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotal: () => number;
-  getItemCount: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -63,20 +55,15 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => {
         set({ items: [] });
       },
-
-      getTotal: () => {
-        return get().items.reduce(
-          (total, item) => total + item.product.price * item.quantity,
-          0
-        );
-      },
-
-      getItemCount: () => {
-        return get().items.reduce((count, item) => count + item.quantity, 0);
-      },
     }),
     {
       name: "cart-storage",
     }
   )
 );
+
+export const selectCartTotal = (state: CartStore) =>
+  state.items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+
+export const selectCartItemCount = (state: CartStore) =>
+  state.items.reduce((count, item) => count + item.quantity, 0);

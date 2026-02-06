@@ -89,8 +89,8 @@ model Product {
   name           String
   slug           String      @unique
   description    String      @db.Text
-  price          Float
-  compareAtPrice Float?
+  price          Decimal
+  compareAtPrice Decimal?
   images         String[]
   categoryId     String
   category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -112,7 +112,7 @@ model Order {
   userId           String
   user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items            OrderItem[]
-  total            Float
+  total            Decimal
   status           OrderStatus @default(PENDING)
   shippingAddress  Json
   billingAddress   Json?
@@ -133,7 +133,7 @@ model OrderItem {
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
-  price     Float
+  price     Decimal
   createdAt DateTime @default(now())
 
   @@index([orderId])

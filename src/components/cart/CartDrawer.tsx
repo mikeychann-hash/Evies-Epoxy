@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCartStore } from "@/store/cartStore";
+import { useCartStore, selectCartTotal } from "@/store/cartStore";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 
@@ -15,7 +15,8 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { items, removeItem, updateQuantity, getTotal } = useCartStore();
+  const { items, removeItem, updateQuantity } = useCartStore();
+  const total = useCartStore(selectCartTotal);
 
   useEffect(() => {
     if (isOpen) {
@@ -155,7 +156,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span>Total</span>
                   <span className="text-primary-600 dark:text-primary-400">
-                    {formatPrice(getTotal())}
+                    {formatPrice(total)}
                   </span>
                 </div>
                 <Link href="/checkout" onClick={onClose}>
