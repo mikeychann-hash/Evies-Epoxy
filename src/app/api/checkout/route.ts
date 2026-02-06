@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     // Calculate totals using server-side prices
     const subtotal = items.reduce((sum: number, item: any) => {
       const product = productMap.get(item.productId)!;
-      return sum + product.price * item.quantity;
+      return sum + Number(product.price) * item.quantity;
     }, 0);
     const shipping = subtotal > 50 ? 0 : 10;
     const tax = subtotal * 0.1;
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
             create: items.map((item: any) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: productMap.get(item.productId)!.price,
+              price: Number(productMap.get(item.productId)!.price),
             })),
           },
         },
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
             product_data: {
               name: product.name,
             },
-            unit_amount: Math.round(product.price * 100),
+            unit_amount: Math.round(Number(product.price) * 100),
           },
           quantity: item.quantity,
         };

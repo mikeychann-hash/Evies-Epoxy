@@ -7,20 +7,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, User, Menu, X, Search } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Button } from "@/components/ui/Button";
-import { useCartStore } from "@/store/cartStore";
+import { useCartStore, selectCartItemCount } from "@/store/cartStore";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { data: session } = useSession();
-  const itemCount = useCartStore((state) => state.getItemCount());
+  const itemCount = useCartStore(selectCartItemCount);
 
   const navigation = [
     { name: "Shop", href: "/products" },
-    { name: "Categories", href: "/categories" },
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
   ];
 
   return (

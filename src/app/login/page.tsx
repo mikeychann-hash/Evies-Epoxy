@@ -98,12 +98,13 @@ export default function LoginPage() {
                 />
                 <span>Remember me</span>
               </label>
-              <Link
-                href="/forgot-password"
+              <button
+                type="button"
+                onClick={() => toast("Password reset coming soon!")}
                 className="text-primary-600 dark:text-primary-400 hover:underline"
               >
                 Forgot password?
-              </Link>
+              </button>
             </div>
 
             <Button

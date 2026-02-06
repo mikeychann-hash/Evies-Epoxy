@@ -140,14 +140,14 @@ export default function SignupPage() {
                 <span className="text-gray-600 dark:text-gray-400">
                   I agree to the{" "}
                   <Link
-                    href="/terms"
+                    href="#"
                     className="text-primary-600 dark:text-primary-400 hover:underline"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="/privacy"
+                    href="#"
                     className="text-primary-600 dark:text-primary-400 hover:underline"
                   >
                     Privacy Policy
