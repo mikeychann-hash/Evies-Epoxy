@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -48,6 +48,12 @@ export default function CheckoutPage() {
     postalCode: "",
     country: "US",
   });
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      setShippingAddress((prev) => ({ ...prev, email: session.user.email || "" }));
+    }
+  }, [session]);
 
   const subtotal = getTotal();
   const shipping = subtotal > 50 ? 0 : 10;

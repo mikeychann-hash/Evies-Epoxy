@@ -36,25 +36,47 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Determine role (first user becomes admin)
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? "ADMIN" : "USER";
+    // Determine role
+    let user;
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-    });
+    if (process.env.ADMIN_EMAIL) {
+      // Use ADMIN_EMAIL env var to assign admin role
+      const role = email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER";
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      });
+    } else {
+      // Fall back to first-user approach, wrapped in a transaction to prevent race conditions
+      user = await prisma.$transaction(async (tx) => {
+        const userCount = await tx.user.count();
+        const role = userCount === 0 ? "ADMIN" : "USER";
+        return tx.user.create({
+          data: {
+            name,
+            email,
+            password: hashedPassword,
+            role,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        });
+      });
+    }
 
     return NextResponse.json(
       { message: "User created successfully", user },
